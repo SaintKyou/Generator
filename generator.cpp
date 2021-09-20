@@ -5,15 +5,18 @@
 
 std::mt19937_64 engine(std::time(nullptr));
 std::uniform_real_distribution<double> distribution{0, 1};
+std::ofstream crds ("C:\\Qt\\progects\\En_dep\\cardS.txt");
+std::ofstream neas ("C:\\Qt\\progects\\En_dep\\NEAS.txt");
+constexpr double pi{3.14159265358979323846};
 
 void Generator::randomcp(){
     double gamma1{}, gamma2{};
     gamma1 = distribution(engine);
     gamma2 = distribution(engine);
-    x0 = r0*(2*gamma1 - 1.);
-    y0 = r0*(2*gamma2 - 1.);
-//  x0 = 31.4;                 // для теста -37.2	-18.5
-//  y0 = 19.4;                 // 31.4  19.4
+    x0 = r0*std::sqrt(gamma1)*std::cos(gamma2*2*pi);
+    y0 = r0*std::sqrt(gamma1)*std::sin(gamma2*2*pi);
+    //  x0 = 31.4;                 // для теста -37.2	-18.5
+    //  y0 = 19.4;                 // 31.4  19.4
 }
 
 int Generator::poisson(double &p, int &N){
@@ -102,22 +105,21 @@ void Generator::en_dep(double &eps, double &rdx, int &i){
        else if (EL < 0.3 && EL >= 0.1) pg = 0.0025*std::pow(EL, 2);         // for gammas 100<E<300 MeV
        else if(EL >= 0.3) pg = 4e-4*std::sqrt(EL);                          // E > 300 MeV
     }
-    else if(pid > 7) pg = 0.0125*std::pow(EL, 0.45);                        // for hadrons from GEANT
+    else if(pid > 7){
+    pg = 0.0125*std::pow(EL, 0.45);                        // for hadrons from GEANT
     p = std::exp(-rdx/0.45)*pg*0.635;                                       // due to pulse selection efficiency
     int N{};
     if(p < 5)  N = poisson(p, N);                                           // Пуассон
     else N = round(0.5+p);
     ien[i] += N;                                                            // No of n (atmospheric n added)
     Nn+=N;
+    }
 }
 
 void Generator::output(double Ns, double ECRTOT, double THETACR, double PHICR){
     int *n16 = new int[4];
     double *jd = new double[64];
     double *esum = new double[4];
-
-    std::ofstream crds ("C:\\Qt\\progects\\En_dep\\cardS.csv");
-    std::ofstream neas ("C:\\Qt\\progects\\En_dep\\NEAS.csv");
 
     int M{}, M1{}, M2{}, N{};
     double p{}, sEn{};
@@ -156,19 +158,24 @@ void Generator::output(double Ns, double ECRTOT, double THETACR, double PHICR){
         std::cout << "Ns = " << Ns << " evs = " << N_event << " M = " << M << " n = " << Nn << " mu= " << Nm << " E= " << ECRTOT/1e3 << ' '
         << "Nn_sq= " << Nn_sq << '\n';
 
-        crds << "x0" << "," << "y0" << "," << "Ns " << "," << "Nn " << "," << "Nm " << "," << "M " << "," << "jd " << "," << "ien "
-             << "," << "nedmu " << "," << "sEn " << "," << "ECR " << "," << "THETACR " << "," << "PHICR " << "," << "Nn_sq " << '\n';
+       // crds << "x0" << "," << "y0" << "," << "Ns " << "," << "Nn " << "," << "Nm " << "," << "M " << "," << "jd " << "," << "ien "
+       //      << "," << "nedmu " << "," << "sEn " << "," << "ECR " << "," << "THETACR " << "," << "PHICR " << "," << "Nn_sq " << '\n';
 
-        for(int i = 0; i < 64; ++i){
-           if(i==0){
-           crds << x0 << "," << y0 << "," << Ns  << "," << Nn  << "," << Nm << "," << M << "," << jd[i] << "," << ien[i]
-           << "," << nedmu[i] << "," << sEn << "," << ECRTOT/1e3 << "," << THETACR << "," << PHICR << "," << Nn_sq << '\n';
-           }
-           else{
-               crds << ' ' << "," << ' '  << "," << ' '  << "," << ' '  << "," << ' ' << "," << ' ' << "," << jd[i] << "," << ien[i]
-               << "," << nedmu[i] << "," << ' ' << "," << ' ' << "," << ' ' << "," << ' ' << "," << ' ' << '\n';
-           }
-        }
+//        for(int i = 0; i < 64; ++i){
+//           if(i==0){
+//           crds << x0 << "," << y0 << "," << Ns  << "," << Nn  << "," << Nm << "," << M << "," << jd[i] << "," << ien[i]
+//           << "," << nedmu[i] << "," << sEn << "," << ECRTOT/1e3 << "," << THETACR << "," << PHICR << "," << Nn_sq << '\n';
+//           }
+//           else{
+//               crds << ' ' << "," << ' '  << "," << ' '  << "," << ' '  << "," << ' ' << "," << ' ' << "," << jd[i] << "," << ien[i]
+//               << "," << nedmu[i] << "," << ' ' << "," << ' ' << "," << ' ' << "," << ' ' << "," << ' ' << '\n';
+//           }
+//        }
+            crds << x0 << "," << y0 << "," << Ns  << "," << Nn  << "," << Nm << "," << M << ",";
+            for(int j = 0; j < 64; ++j) crds << jd[j] << "," << ien[j] << "," << nedmu[j] << ",";
+            crds << sEn << "," << ECRTOT/1e3 << "," << THETACR << "," << PHICR << "," << Nn_sq << '\n';
 
         neas << "N_EAS = " << Ns << ' ' << "evs = " << N_event << ' ' << "am0 = " << am0 << " Nd = " << Ndet << '\n';
+        Nn = Nm = Nn_sq = M = En = 0;
+        for(int i = 0; i < Ndet; ++i) ed[i] = jd[i] = ien[i] = nedmu[i] = 0;
 }
