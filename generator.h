@@ -1,7 +1,6 @@
 #ifndef GENERATOR_H
 #define GENERATOR_H
 
-
 #include <vector>
 #include <fstream>
 
@@ -30,6 +29,14 @@ private:
     int pid{};
     double pie{}, pix{}, piy{};
 public:
+    Generator()
+    {
+        r0 = 60;
+        krat = 2;
+        Ndet = 64;
+        rp = 1.46;
+        am0 = 6.0;
+    }
     Generator(int _r0, int _krat, int _Ndet, float _rp, float _am0)
     {
     r0 = _r0;
@@ -41,17 +48,19 @@ public:
     }
     ~Generator() {}
     double x0{}, y0{};
-    int Nm{}, Nh_sq{}, Nh_core{}, Nn_sq{}, Nn{};
-    double RH{}, E{}, Y{}, X{}, N_event{}, En{}, EL{};
+    int Nm{}, Nh_sq{}, Nh_core{}, Nn_sq{}, Nn{}, mask{}; // mask - M1 + M2 + 1 bit (Nn>10)
+    double E{}, Y{}, X{}, N_event{}, En{};
     double *ed = new double[64];
     double *nedmu = new double[64];
     double *ien = new double[64];
+    std::vector <double> all;
     void set(int *pid1, double *pie1, double *pix1, double *piy1){
         pid = *pid1;
         pie = *pie1;
         pix = *pix1;
         piy = *piy1;
     }
+    void print_all();
     int poisson(double &, int&);                        // Пуассон
 
     void randomcp();
