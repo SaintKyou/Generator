@@ -9,7 +9,7 @@ class Generator
 private:
     double *detx = new double[64];
     double *dety = new double[64];
-    void fill_coord(){                                      // заполнение координат детекторов
+    void fill_coord(){                                  // заполнение координат детекторов
         for(int i = 0; i < 16; ++i)
         {
             detx[i] = (-4 + 0.5 + i%4)*5;
@@ -23,36 +23,39 @@ private:
             dety[i+48] = dety[i+32];
         }
     }
-    int r0{}, krat{}, Ndet{};         //60, 2, 64
-    float rp{}, am0{};               //  1.46, 6.0 rp 2.44   !   2.44*3/5=1.46        ! particles per channel of ADC in MSC
+    int radius{}, krat{}, Number_det{};                 //60, 2, 64
+    float par_per_channel{}, threshold{};               //  1.46, 6.0 2.44   !   2.44*3/5=1.46        ! particles per channel of ADC in MSC
     // Corsika
     int pid{};
     double pie{}, pix{}, piy{};
 public:
     Generator()
     {
-        r0 = 60;
+        radius = 60;
         krat = 2;
-        Ndet = 64;
-        rp = 1.46;
-        am0 = 6.0;
+        Number_det = 64;
+        par_per_channel = 1.46;
+        threshold = 6.0;
     }
-    Generator(int _r0, int _krat, int _Ndet, float _rp, float _am0)
+    Generator(int _radius, int _krat, int _Number_det, float _par_per_channel, float _threshold)
     {
-    r0 = _r0;
+    radius = _radius;
     krat = _krat;
-    Ndet = _Ndet;
-    rp = _rp;
-    am0 = _am0;
+    Number_det = _Number_det;
+    par_per_channel = _par_per_channel;
+    threshold = _threshold;
     fill_coord();
     }
     ~Generator() {}
-    double x0{}, y0{};
-    int Nm{}, Nh_sq{}, Nh_core{}, Nn_sq{}, Nn{}, mask{}; // mask - M1 + M2 + 1 bit (Nn>10)
-    double E{}, Y{}, X{}, N_event{}, En{};
-    double *ed = new double[64];
-    double *nedmu = new double[64];
-    double *ien = new double[64];
+    double x_core{}, y_core{};
+    int Number_muons{}, Number_hadrons_circle{}, Number_hadrons_core{}, Number_neutrons_circle{}, Number_neutrons{};
+    double E_Gev{}, Y_shift{}, X_shift{}, Number_event{}, Ne{};
+    double *en_deposit = new double[64];
+    double *muon_det = new double[64];
+    double *integ_par = new double[64];
+
+    //double *number_par_adc = new double[64];
+
     std::vector <double> all;
     void set(int *pid1, double *pie1, double *pix1, double *piy1){
         pid = *pid1;
@@ -61,12 +64,19 @@ public:
         piy = *piy1;
     }
     void print_all();
-    int poisson(double &, int&);                        // Пуассон
+    double gamma_dep_inside(double&);
+    double gamma_dep_outside(double&);
+    double electrons_dep_inside(double&);
+    double muons_dep_inside(double&);
+    double neutrons_dep_inside(double&);
+    double protons_dep_inside(double&);
+    void cherenok(double &, double&, int&, int&);
 
     void randomcp();
     void process();
     void en_dep(double&, double&, int&);
     void output(double Ns, double ECRTOT, double THETACR, double PHICR);
+    void print(double Ns, double ECRTOT, double THETACR, double PHICR);
 };
 
 #endif // GENERATOR_H
