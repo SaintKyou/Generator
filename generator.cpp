@@ -1,22 +1,35 @@
 #include "generator.h"
-#include <random>
+#include <tr1/random>
 #include <ctime>
 #include <iostream>
-#include <mutex>
 
-std::mt19937_64 engine(std::time(nullptr));
-std::uniform_real_distribution<double> distribution{0, 1};
-std::ofstream crds ("C:\\Qt\\progects\\En_dep\\cardS.txt");
-std::ofstream crds_ ("C:\\Qt\\progects\\En_dep\\cardS1.txt");
-std::ofstream neas ("C:\\Qt\\progects\\En_dep\\NEAS.txt");
-constexpr double pi{3.14159265358979323846};
+std::tr1::mt19937 gen(std::time(NULL));
 
-std::vector<double> all2;
+double uniform(int a, int b){
+    return a + (b-a)*(static_cast<double>(gen())/gen.max());
+}
+
+int poisson(double p){
+double TR=0, gamma1;
+int N=0;
+gamma1 = uniform(0,1);
+TR = gamma1;
+while(TR - std::exp(-p) > 0){
+gamma1 = uniform(0,1);
+TR*=gamma1;
+N+=1;
+}
+return N;
+}
+
+std::ofstream crds ("cardS.txt");
+std::ofstream neas ("NEAS.txt");
+const double pi = 3.14159265358979323846;
 
 void Generator::randomcp(){
-    double gamma1{}, gamma2{};
-    gamma1 = distribution(engine);
-    gamma2 = distribution(engine);
+    double gamma1, gamma2;
+    gamma1 = uniform(0,1);
+    gamma2 = uniform(0,1);
     x_core = radius*std::sqrt(gamma1)*std::cos(gamma2*2*pi);
     y_core = radius*std::sqrt(gamma1)*std::sin(gamma2*2*pi);
 }
@@ -71,7 +84,7 @@ void Generator::process(){
     }
     else return;                                                        // around dets in CARPET, R=20 m
 
-    double distance{}, eps{};
+    double distance=0, eps=0;
     for(int i = 0; i < Number_det; ++i)
     {
         eps = 0;
@@ -107,19 +120,18 @@ void Generator::process(){
 }
 
 void Generator::en_dep(double &eps, double &distance, int &i){
-    double gamma{};
-    gamma = distribution(engine);
+    double gamma;
+    gamma = uniform(0,1);
     if(gamma <= 0.8) en_deposit[i] += eps*1.25;
-    double pg{}, p{};
-    int N{};
+    double pg=0, p=0;
+    int N=0;
     if(distance<=40){
         if(pid > 7 || (pid == 1 && pie > 10)){
             if(pid == 1) pg = gamma_dep_outside(E_Gev);                            // gammas inside 20 m around det.
             else pg = 0.0125*std::pow(E_Gev, 0.45);                                // for hadrons from GEANT
             p = std::exp(-distance/0.45)*pg*0.635;                                 // due to pulse selection efficiency
             if(p < 5){
-                std::poisson_distribution<int> dis(p);
-                N = dis(engine);
+                N = poisson(p);
             }
             else N = round(0.5+p);
             integ_par[i] += N;                                                            // No of n (atmospheric n added)
@@ -129,31 +141,29 @@ void Generator::en_dep(double &eps, double &distance, int &i){
 }
 
 void Generator::output(double Ns, double ECRTOT, double THETACR, double PHICR){
-    int *trigged_det = new int[4];
-    double *number_par_adc = new double[64];
-    double *en_sum = new double[4];
-    int  M1{}, M2{}, N{}, M{};
-    double p{}, lg_Ne{};
+    int trigged_det=0;
+    double *number_par_adc = new double[16];
+    double en_sum=0;
+    int  M1=0, M2=0, N=0, M=0;
+    double p=0, lg_Ne=0;
 
-    for(int j = 0; j < 4; ++j){
         for(int i = 0; i < 16; ++i){
-            p = en_deposit[i+16*j]/par_per_channel;
+            p = en_deposit[i]/par_per_channel;
             if(p < 10){
-                std::poisson_distribution<int> dis(p);
-                N = dis(engine);
+                N = poisson(p);
             }
             else N = round(0.5+p);
 
-            en_deposit[i+16*j] = number_par_adc[i+16*j] = N;
-            if(en_deposit[i+16*j] >= threshold) trigged_det[j]+=1;
+            en_deposit[i] = number_par_adc[i] = N;
+            if(en_deposit[i] >= threshold) trigged_det+=1;
 
-            en_sum[j] += number_par_adc[i+16*j];
-            if(integ_par[i+16*j] > 999) integ_par[i+16*j] = 999;
-            if(number_par_adc[i+16*j] > 99999) number_par_adc[i+16*j] = 99999;
+            en_sum += number_par_adc[i];
+            if(integ_par[i] > 999) integ_par[i] = 999;
+            if(number_par_adc[i] > 99999) number_par_adc[i] = 99999;
         }
-        if(trigged_det[j] >= krat) ++M1;
-        if(en_sum[j] >= 300) ++M2;
-  }
+        if(trigged_det >= krat) ++M1;
+        if(en_sum >= 300) ++M2;
+
         if(M1 >=1) M = 1;
         if(M2 >= 1) M += 2;
         if(Number_neutrons >=10) M += 4;
@@ -174,9 +184,6 @@ void Generator::output(double Ns, double ECRTOT, double THETACR, double PHICR){
         std::cout << "Ns = " << Ns << " evs = " << Number_event << " M = " << M << " n = " << Number_neutrons << " mu= " << Number_muons
                   << " E= " << ECRTOT/1e3 << ' ' << "Number_hadrons_circle= " << Number_hadrons_circle << '\n';
 
-        //crds_ << x_core << "," << y_core << "," << Ns  << "," << Number_neutrons  << "," << Number_muons << "," << M << ",";
-        for(int j = 0; j < 64; ++j) crds_ << number_par_adc[j] << "," << integ_par[j] << "," << muon_det[j] << ",";
-
         all.insert(all.end(), {x_core, y_core, Ns, static_cast<double>(Number_neutrons), static_cast<double>(Number_muons), static_cast<double>(M)});
         for(int j = 0; j < Number_det; ++j){
             all.push_back(number_par_adc[j]);
@@ -184,8 +191,6 @@ void Generator::output(double Ns, double ECRTOT, double THETACR, double PHICR){
             all.push_back(muon_det[j]);
         }
         all.insert(all.end(), {lg_Ne, ECRTOT/1e3, THETACR, PHICR, static_cast<double>(Number_hadrons_circle)});
-
-        //crds_ << lg_Ne << "," << ECRTOT/1e3 << "," << THETACR << "," << PHICR << "," << Number_hadrons_circle << '\n';
 
         //neas << "N_EAS = " << Ns << ' ' << "evs = " << N_event << ' ' << "am0 = " << am0 << " Nd = " << Ndet << '\n';
         }
@@ -195,8 +200,8 @@ void Generator::output(double Ns, double ECRTOT, double THETACR, double PHICR){
 
 void Generator::print_all(){
     for(int i = 0; i < all.size(); ++i){
-        if((i+1)%203!=0) crds << all[i] << ",";
-        if((i+1)%203==0){
+        if((i+1)%59!=0) crds << all[i] << ",";
+        if((i+1)%59==0){
             crds << all[i] <<'\n';
         }
     }
