@@ -1,15 +1,13 @@
 #include "generator.h"
 #include <tr1/random>
-#include <ctime>
+#include <time.h>
 #include <iostream>
 
-std::tr1::mt19937 gen(std::time(NULL));
-
-double uniform(int a, int b){
+double Generator::uniform(int a, int b){
     return a + (b-a)*(static_cast<double>(gen())/gen.max());
 }
 
-int poisson(double p){
+int Generator::poisson(double p){
 double TR=0, gamma1;
 int N=0;
 gamma1 = uniform(0,1);
@@ -22,8 +20,8 @@ N+=1;
 return N;
 }
 
-std::ofstream crds ("cardS.txt");
-std::ofstream neas ("NEAS.txt");
+std::ofstream crds ("C:\\Qt\\progects\\e_dep_clust\\cardS.txt");
+std::ofstream neas ("C:\\Qt\\progects\\e_dep_clust\\NEAS.txt");
 const double pi = 3.14159265358979323846;
 
 void Generator::randomcp(){
