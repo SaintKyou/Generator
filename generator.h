@@ -40,7 +40,7 @@ public:
     Number_det = _Number_det;
     par_per_channel = _par_per_channel;
     threshold = _threshold;
-    std::ifstream conf("C:\\Qt\\progects\\e_dep_clust\\test\\config.txt");
+    std::ifstream conf("config.txt");
     for(int i = 0; i < 16; ++i) conf >> detx[i] >> dety[i];
 /*    for(int i = 0; i < 16; ++i)
     {
