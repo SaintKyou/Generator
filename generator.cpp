@@ -1,15 +1,8 @@
 #include "generator.h"
-//#include <random>
 #include <tr1/random>
 #include <time.h>
 #include <iostream>
 #include <algorithm>
-
-//std::tr1::mt19937 gen/*(std::time(NULL))*/;
-
-//void Generator::set_seed(int seed) {
-//    gen.seed(static_cast<std::tr1::mt19937::result_type>(seed));
-//}
 
 double Generator::uniform(int a, int b){
     return a + (b-a)*(static_cast<double>(gen())/gen.max());
@@ -32,18 +25,12 @@ std::ofstream crds ("cardS_cpp.txt");
 std::ofstream neas ("NEAS_cpp.txt");
 const double pi = 3.14159265358979323846;
 
-//std::vector<double> all2;
-
-//std::ifstream xy ("C:\\Qt\\progects\\e_dep_clust\\xy.txt");
-
 void Generator::randomcp(){
     double gamma1, gamma2;
     gamma1 = uniform(0,1);
     gamma2 = uniform(0,1);
     x_core = radius*std::sqrt(gamma1)*std::cos(gamma2*2*pi) /*+ 7.5*/;
     y_core = radius*std::sqrt(gamma1)*std::sin(gamma2*2*pi) /*+ 7.5*/;
-    //x_core = 0;
-    //y_core = 0;
 }
 
 double Generator::gamma_dep_inside(double &E_Gev){
@@ -133,7 +120,6 @@ void Generator::process(){
 
 void Generator::en_dep(double &eps, double &distance, int &i){
     double gamma;
-    //gamma = distribution(engine);
     gamma = uniform(0,1);
     if(gamma <= 0.8){
        en_deposit[i] += eps*1.25;
@@ -157,17 +143,12 @@ void Generator::en_dep(double &eps, double &distance, int &i){
 }
 
 void Generator::output(int* Ns, int* ECRTOT, float* THETACR, float* PHICR){
-//void Generator::output(int Ns, int ECRTOT, float THETACR, float PHICR){
-//    int *trigged_det = new int[4];
-//    double *number_par_adc = new double[64];
-//    double *en_sum = new double[4];
     int trigged_det=0;
     double *number_par_adc = new double[16];
     double en_sum=0;
     int  M1=0, M2=0, N=0, M=0;
     double p=0, lg_Ne=0;
-
-//    g_lock.lock();
+	
         for(int i = 0; i < 16; ++i){
             p = en_deposit[i]/par_per_channel;
             if(p < 10){
@@ -219,7 +200,6 @@ void Generator::output(int* Ns, int* ECRTOT, float* THETACR, float* PHICR){
             all.push_back(number_par_adc[j]);
             all.push_back(integ_par[j]);
             all.push_back(muon_det[j]);
-            //all.push_back(time_trig[j]);
             //(times_det[j].size()>4 /*&& (times_det[j][4]-min) < 150*/) ? all.push_back(times_det[j][4]-min): all.push_back(-1);
             if(times_det[j].size() < 4 || (times_det[j].size() > 4 && times_det[j][4] - min < 0)) all.push_back(-1);
             else all.push_back(times_det[j][4]-min);
