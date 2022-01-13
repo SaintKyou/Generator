@@ -19,14 +19,6 @@
 #include <time.h>
 using namespace std;
 
-//extern "C"
-//{
-//  void startall_(int *, int*, int*);
-//  void randomcp_();
-//  void process_(unsigned short int *, int *, int *, int *);
-//  void output_(int *, int *, float *, float *);
-//}
-
 // to hold data of one observation level
 struct ObsLevel {
   double x;
@@ -60,11 +52,6 @@ float OneShowerPhi;
 std::vector<double> all;
 std::mutex g_lock;
 
-//  void process_(unsigned short int *, int *, int *, int *);
-//  void output_(int *, int *, float *, float *);
-
-//std::ofstream out("str.txt");
-//std::ofstream out1("str1.txt");
 void loop(int number, unsigned int seed){
   Generator par2(15, 2, 16, 1.46, 6.0, seed);
   for(unsigned int k=0; k < number; ++k){
