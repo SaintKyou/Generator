@@ -29,8 +29,8 @@ void Generator::randomcp(){
     double gamma1, gamma2;
     gamma1 = uniform(0,1);
     gamma2 = uniform(0,1);
-    x_core = radius*std::sqrt(gamma1)*std::cos(gamma2*2*pi) /*+ 7.5*/;
-    y_core = radius*std::sqrt(gamma1)*std::sin(gamma2*2*pi) /*+ 7.5*/;
+    x_core = radius*std::sqrt(gamma1)*std::cos(gamma2*2*pi);
+    y_core = radius*std::sqrt(gamma1)*std::sin(gamma2*2*pi);
 }
 
 double Generator::gamma_dep_inside(double &E_Gev){
@@ -148,14 +148,10 @@ void Generator::output(int* Ns, int* ECRTOT, float* THETACR, float* PHICR){
     double en_sum=0;
     int  M1=0, M2=0, N=0, M=0;
     double p=0, lg_Ne=0;
-	
+
         for(int i = 0; i < 16; ++i){
             p = en_deposit[i]/par_per_channel;
-            if(p < 10){
-                //std::poisson_distribution<int> dis(p);
-                //N = dis(engine);
-                N = poisson(p);
-            }
+            if(p < 10) N = poisson(p);
             else N = round(0.5+p);
 
             en_deposit[i] = number_par_adc[i] = N;
@@ -190,34 +186,28 @@ void Generator::output(int* Ns, int* ECRTOT, float* THETACR, float* PHICR){
                   << " E= " << (*ECRTOT)/1e3 << ' ' << "Number_hadrons_circle= " << Number_hadrons_circle << '\n';
 
         for (int i = 0; i < 16; ++i) sort(times_det[i].begin(), times_det[i].end());
-        for(int i = 0; i < 16; ++i) if(times_det[i].size()>4) time_trig.push_back(times_det[i][4]);
-        sort(time_trig.begin(), time_trig.end());
-        int min = time_trig[1];   /*times_det[0][4]*/;
 
         // x, y, Ns, Number_neutrons, Number_neutrons, M, (16*4), [6:70], lg_Ne, ECRTOT/1e3, THETACR, PHICR, Number_hadrons_circle [75]
-        all.insert(all.end(), {x_core, y_core, static_cast<double>(*Ns/**Ns*/), static_cast<double>(Number_neutrons), static_cast<double>(Number_neutrons), static_cast<double>(M)});
+        all.insert(all.end(), {x_core, y_core, static_cast<double>(*Ns), static_cast<double>(Number_neutrons), static_cast<double>(Number_muons), static_cast<double>(M)});
         for(int j = 0; j < Number_det; ++j){
             all.push_back(number_par_adc[j]);
             all.push_back(integ_par[j]);
             all.push_back(muon_det[j]);
-            //(times_det[j].size()>4 /*&& (times_det[j][4]-min) < 150*/) ? all.push_back(times_det[j][4]-min): all.push_back(-1);
-            if(times_det[j].size() < 4 || (times_det[j].size() > 4 && times_det[j][4] - min < 0)) all.push_back(-1);
-            else all.push_back(times_det[j][4]-min);
+            (times_det[j].size()>4) ? all.push_back(times_det[j][4]-(times_det[j][4]%20)): all.push_back(-1);  
         }
         all.insert(all.end(), {lg_Ne, (*ECRTOT)/1e3, *THETACR, *PHICR, static_cast<double>(Number_hadrons_circle)});
         //neas << "N_EAS = " << Ns << ' ' << "evs = " << N_event << ' ' << "am0 = " << am0 << " Nd = " << Ndet << '\n';
         }
         Number_neutrons = Number_muons = Number_hadrons_circle = M = Ne = 0;
-        for(int i = 0; i < Number_det; ++i) en_deposit[i] = number_par_adc[i] = integ_par[i] = muon_det[i] = 0;
-	time_trig.clear();
-	for(int i = 0; i < Number_det; ++i) times_det[i].clear();
+        for(int i = 0; i < Number_det; ++i){
+ 	en_deposit[i] = number_par_adc[i] = integ_par[i] = muon_det[i] = 0;
+	times_det[i].clear();
+	}
 }
 
 void Generator::print_all(){
     for(int i = 0; i < all.size(); ++i){
         if((i+1)%75!=0) crds << all[i] << ",";
-        if((i+1)%75==0){
-            crds << all[i] <<'\n';
-        }
-    }
+        if((i+1)%75==0) crds << all[i] <<'\n';
+    }	
 }
