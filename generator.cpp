@@ -81,7 +81,7 @@ void Generator::process(){
         if (pid ==13) Number_neutrons_circle+=1;
         if(pid > 6) Number_hadrons_circle+=1;
     }
-    else return;                                                        // around dets in CARPET, R=20 m
+    // else return;                                                        // around dets in CARPET, R=20 m
 
     double distance=0, eps=0;
     for(int i = 0; i < Number_det; ++i)
