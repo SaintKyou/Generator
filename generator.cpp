@@ -73,8 +73,9 @@ void Generator::process(){
     X_shift = pix/100.0 + x_core;
     Y_shift = piy/100.0 + y_core;
 
-    if(std::sqrt(X_shift*X_shift+Y_shift*Y_shift) < 8) Ne+=1;                               // full Ne w/o gammas within R<Rm
-
+    //if(std::sqrt(X_shift*X_shift+Y_shift*Y_shift) < 8) Ne+=1;                               // full Ne w/o gammas within R<Rm
+    if(pid == 1) Ne+=1;
+	
     if(pid > 6 && std::sqrt(X_shift*X_shift+Y_shift*Y_shift) < 1) Number_hadrons_core+=1;   // hadrons inside r=1m : the core
 
     if (std::abs(X_shift) < 20 && std::abs(Y_shift) < 20){
